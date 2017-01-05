@@ -1,0 +1,295 @@
+<html>
+<head><title>node.js + socket.io クイズ マスター</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<script src = "socket.io/socket.io.js"></script>
+<script>
+var soc = io.connect("http://sasamine.net:3000", {"sync disconnect on unload" : true});
+var table25 = "";
+var score_board = "";
+var sound = "";
+var answering = 0;
+var answer = "";
+var next_answers = "";
+var attack_chance = "";
+var chat_textbox = "";
+var chat_text = "", chat_name = "";
+var white_boards = "";
+soc.on("init", function(){
+	table25 = document.getElementById("table25");
+	score_board = {"#ff7070": document.getElementById("#ff7070"), "#7cdb69": document.getElementById("#7cdb69"), "#ffffff": document.getElementById("#ffffff"), "#898dff": document.getElementById("#898dff")};
+	sound = {"maru" : maru, "maru0" : maru0, "maru1" : maru1, "maru2" : maru2, "maru3" : maru3, "maru4" : maru4, "batsu" : batsu, "batsu25" : batsu25, "think" : think};
+	users_num = document.getElementById("users_num");
+	online_users = document.getElementById("online_users");
+	answer = document.getElementById("answer");
+	next_answers = document.getElementById("next_answers");
+	attack_chance = document.getElementById("attack_chance");
+	chat_textbox = document.getElementById("chat_textbox");
+	chat_name = document.getElementById("chat_name");
+	chat_text = document.getElementById("chat_text");
+	white_boards = document.getElementById("white_boards");
+});
+soc.on("sound", function(data){	//メッセージ"sound"受信時の処理
+	play_sound(data);
+});
+soc.on("update", function(data){
+	for(i = 0; i < 5; i++){
+		for(j = 0; j < 5; j++){
+			table25.rows[i].cells[j].style.backgroundColor = data[0][i][j];
+		}
+	}
+	cnt = 0;
+	for(i in data[1]){
+		score_board[i].innerHTML = data[1][i];
+		if(++cnt == 4) break;
+	}
+});
+soc.on("users", function(data){
+	users_num.innerHTML = data.length;
+	online_users.innerHTML = "";
+	for(var i = 0; i < data.length; i++){
+		if(data[i]["color"] == "white"){
+			online_users.innerHTML = online_users.innerHTML+"<font color='black' style='background-color: white'>"+data[i]["user"]+"</font><br />";
+		}else{
+			online_users.innerHTML = online_users.innerHTML+"<font color='white' style='background-color: "+data[i]["color"]+"'>"+data[i]["user"]+"</font><br />";
+		}
+	}
+});
+soc.on("p", function(data){
+	if(!answering){
+		play_sound(data[0][0]["color"]);
+		answering = 1;
+	}
+	answer.style.backgroundColor=data[0][0]["color"];
+	if(data[0][0]["color"] == "white"){
+		answer.style.color="black";
+	}else{
+		answer.style.color="white";
+	}
+	answer.innerHTML = data[0][0]["player"];
+
+	next_answers.innerHTML = "";
+	for(var i = 1; i < data.length; i++){
+		if(data[i][0]["color"] == "white"){
+			next_answers.innerHTML = next_answers.innerHTML+" <font color='black' style='background-color: white'> "+data[i][0]["player"]+" </font>("+(data[i][1]-data[0][1])+"ms) ";
+		}else{
+			next_answers.innerHTML = next_answers.innerHTML+" <font color='white' style='background-color: "+data[i][0]["color"]+"'> "+data[i][0]["player"]+" </font>("+(data[i][1]-data[0][1])+"ms) ";
+		}
+	}
+});
+soc.on("answer_clear", function(){
+	answer.style.backgroundColor="white";
+	answer.innerHTML = "";
+	next_answers.innerHTML = "";
+	answering = 0;
+});
+soc.on("attack_chance", function(){
+	attack_chance.innerHTML = "アタックチャンス";
+});
+soc.on("not_attack_chance", function(){
+	attack_chance.innerHTML = "";
+});
+soc.on("chat", function(data){
+	if(data["color"] == "white"){
+		chat_name.innerHTML = "<font color='black' style='background-color: white'> "+data["user"]+" </font><br />" + chat_name.innerHTML;
+	}else{
+		chat_name.innerHTML = "<font color='white' style='background-color: "+data["color"]+"'> "+data["user"]+" </font><br />" + chat_name.innerHTML;
+	}
+	chat_text.innerHTML = " : " + data["text"] + "<br />" + chat_text.innerHTML;
+});
+soc.on("memo", function(data){
+	if(document.activeElement != document.getElementById("memobox")){
+		document.getElementById("memobox").value = data[0];
+	}
+});
+soc.on("white_board", function(data){
+	white_boards.innerHTML = "<input type=\"button\" value=\"回答ボードオープン\" onclick=\"soc.emit('white_board_open')\"><br />\n";
+	for(var i in data){
+		if(data[i]["color"] == "white"){
+			white_boards.innerHTML += "<font color='black' style='background-color: white'> "+data[i]["user"]+" </font> : ";
+		}else{
+			white_boards.innerHTML += "<font color='white' style='background-color: "+data[i]["color"]+"'> "+data[i]["user"]+" </font> : ";
+		}
+		white_boards.innerHTML += data[i]["text"] + "<br />";
+	}
+});
+soc.on("white_board_open", function(data){
+	var tmp_name = "", tmp_text = "";
+	for(var i in data){
+		if(data[i]["color"] == "white"){
+			tmp_name += "<font color='black' style='background-color: white'>"+data[i]["user"]+" </font><br />";
+		}else{
+			tmp_name += "<font color='white' style='background-color: "+data[i]["color"]+"'>"+data[i]["user"]+" </font><br />";
+		}
+		tmp_text += "っ[ " + data[i]["text"] + " ] <br />";
+	}
+	chat_name.innerHTML = "-----<br />" + tmp_name + "-----<br />" + chat_name.innerHTML;
+	chat_text.innerHTML = "----------------------------<br />" + tmp_text + "----------------------------<br />" + chat_text.innerHTML;
+});
+soc.on("dice_val", function(data){
+	document.getElementById("dice").innerHTML="";
+	setTimeout(function(){
+		document.getElementById("dice").innerHTML=data;
+	},600);
+});
+function play_sound(sound_name){
+	for(var i in sound){
+		sound[i].pause();
+	}
+	if(sound_name.indexOf("maru") != -1 || sound_name == "batsu" || sound_name == "batsu25" || sound_name == "think"){
+		sound[sound_name].currentTime = 0;
+		sound[sound_name].play();
+	}
+	else (new Audio("http://sasamine.net:3000/sounds/"+sound_name+".mp3")).play();
+}
+function maru_sound_plus(){
+	num = Math.floor(Math.random() * 5);
+	sound_send("maru" + num);
+}
+function sound_send(command){
+	soc.emit("sound",command);
+	if((command == "batsu25" || command == "batsu" || command == "maru") && document.getElementById("clear_immediately").checked){
+		answer_clear();
+	}
+}
+function sound_key(code){
+	if(code == 65) sound_send('batsu25');
+	else if(code == 66) sound_send('batsu');
+	else if(code == 77) sound_send('maru');
+}
+function answer_clear(){
+	soc.emit("answer_clear");
+}
+var clicked_colors = "";
+function colors_button_click(button){
+	clicked_colors = button;
+}
+function table_click(y,x){
+	if(clicked_colors!=""){
+		soc.emit("change", [y,x,clicked_colors]);
+	}
+	clicked_colors="";
+}
+function reset_table(){
+	if(window.confirm("オールクリアしますか？")){
+		soc.emit("reset_table");
+	}
+}
+function send_chat(){
+	soc.emit("chat", {"user": "master", "color": "black", "text": chat_textbox.value});
+	chat_textbox.value = "";
+}
+function clear_chat(){
+	chat_name.innerHTML = "";
+	chat_text.innerHTML = "";
+}
+function chat_textbox_key(e){
+	if(e.keyCode == 13){
+		send_chat();
+	}
+}
+function memobox_send(){
+	soc.emit("memo",[document.getElementById("memobox").value]);
+}
+function memo_recv(){
+	soc.emit("memo_recv");
+}
+function dice(){
+	soc.emit("dice",[document.getElementById("dice_min").value,document.getElementById("dice_max").value]);
+}
+</script>
+<style type="text/css">
+<!--
+table, td, th {
+	border: 2px #000000 solid;
+}
+//-->
+</style>
+</head>
+<body>
+<div>
+<div style="float: left">
+<div style="float: left">
+<input type="image" src="http://sasamine.net:3000/images/maru.png" width="80" height="80" onclick="sound_send('maru')">
+<input type="image" src="http://sasamine.net:3000/images/batsu.png" width="80" height="80" onclick="sound_send('batsu')">
+</div>
+<div style="float: left">
+<input type="button" onclick="answer_clear()" value="回答者クリア"><br />
+<input type="checkbox" id="clear_immediately" value="clear_immediately">◯×を押したら回答者クリア<br />
+<input type="button" onClick="dice()" value="サイコロを転がす"><br />
+<input type="input" id="dice_min" value="1" size="5">~
+<input type="input" id="dice_max" value="6" size="5">
+</div>
+<div id="dice" align=center style="float: left; width: 80; height: 80; border: black solid 2px; font-size: 75px">
+</div>
+<br clear="all">
+<input type="button" value="正解音+" onclick="maru_sound_plus()" style="width: 80;">
+<input type="button" value="不正解音+" onclick="sound_send('batsu25')" style="width: 80;">
+<input type="button" value="シンキングタイム" onclick="sound_send('think')"><br>
+<table border="1" style="min-width: 460px; height: 100px; font-size: 80px">
+<tr align="center">
+<td id="answer"></td>
+</tr>
+</table>
+</div>
+<div style="float: left">
+接続 : <span id="users_num">0</span><br />
+<span id="online_users"></span>
+</div>
+<br clear="all">
+次: <span id="next_answers" style="width: 450px"></span><br>
+キーボードのM(マル),B(バツ),A(アタック25)で鳴らすときは<input type="button" value="ここ" onkeydown="sound_key(event.keyCode)">をクリックしてフォーカスを合わせておいてください。<br />
+<audio src="http://sasamine.net:3000/sounds/maru.mp3" id="maru" preload="auto"></audio>
+<audio src="http://sasamine.net:3000/sounds/maru0.mp3" id="maru0" preload="auto"></audio>
+<audio src="http://sasamine.net:3000/sounds/maru1.mp3" id="maru1" preload="auto"></audio>
+<audio src="http://sasamine.net:3000/sounds/maru2.mp3" id="maru2" preload="auto"></audio>
+<audio src="http://sasamine.net:3000/sounds/maru3.mp3" id="maru3" preload="auto"></audio>
+<audio src="http://sasamine.net:3000/sounds/maru4.mp3" id="maru4" preload="auto"></audio>
+<audio src="http://sasamine.net:3000/sounds/batsu.mp3" id="batsu" preload="auto"></audio>
+<audio src="http://sasamine.net:3000/sounds/batsu25.mp3" id="batsu25" preload="auto"></audio>
+<audio src="http://sasamine.net:3000/sounds/think.mp3" id="think" preload="auto"></audio>
+<form name="attack25_board">
+<div id="attack_chance" style="font-size: 30px; background-color: yellow"></div><br />
+<input type="button" onclick="colors_button_click('#ff7070')" value="赤" style="width:45px; height:30px; background-color:#ff7070;">
+<input type="button" onclick="colors_button_click('#7cdb69')" value="緑" style="width:45px; height:30px; background-color:#7cdb69;">
+<input type="button" onclick="colors_button_click('#ffffff')" value="白" style="width:45px; height:30px; background-color:#ffffff;">
+<input type="button" onclick="colors_button_click('#898dff')" value="青" style="width:45px; height:30px; background-color:#898dff;">
+<input type="button" onclick="colors_button_click('#eeee00')" value="アタックチャンス" style="height:30px; background-color:#eeee00;"><br />
+<input type="button" onclick="colors_button_click('#c0c0c0')" value="クリア">
+<input type="button" onclick="reset_table()" value="オールクリア"><br />
+<div style="float: left">
+<table rules="none" id="table25" width="300" height="200" cellspacing="0" style="font-size: 20px">
+<tr align="center"><td onclick="table_click(0,0)">1</td><td onclick="table_click(0,1)">2</td><td onclick="table_click(0,2)">3</td><td onclick="table_click(0,3)">4</td><td onclick="table_click(0,4)">5</td></tr>
+<tr align="center"><td onclick="table_click(1,0)">6</td><td onclick="table_click(1,1)">7</td><td onclick="table_click(1,2)">8</td><td onclick="table_click(1,3)">9</td><td onclick="table_click(1,4)">10</td></tr>
+<tr align="center"><td onclick="table_click(2,0)">11</td><td onclick="table_click(2,1)">12</td><td onclick="table_click(2,2)">13</td><td onclick="table_click(2,3)">14</td><td onclick="table_click(2,4)">15</td></tr>
+<tr align="center"><td onclick="table_click(3,0)">16</td><td onclick="table_click(3,1)">17</td><td onclick="table_click(3,2)">18</td><td onclick="table_click(3,3)">19</td><td onclick="table_click(3,4)">20</td></tr>
+<tr align="center"><td onclick="table_click(4,0)">21</td><td onclick="table_click(4,1)">22</td><td onclick="table_click(4,2)">23</td><td onclick="table_click(4,3)">24</td><td onclick="table_click(4,4)">25</td></tr>
+</table>
+<table border="1" id="score" width="300" height="50" style="font-size: 40px">
+<tr align="center">
+<td id="#ff7070" width = "25%" style="color: white; background-color: red">0</td>
+<td id="#7cdb69" width = "25%" style="color: white; background-color: green">0</td>
+<td id="#ffffff" width = "25%">0</td>
+<td id="#898dff" width = "25%" style="color: white; background-color: blue">0</td>
+</tr>
+</table>
+</div>
+<div style="float: left">
+メモ欄(リアルタイムで全員に表示されます)<br />
+<textarea id="memobox" rows="12" cols="40" onkeyup="memobox_send()"></textarea>
+</div>
+<div style="float: left" id="white_boards">
+<input type="button" value="回答ボードオープン" onclick="soc.emit('white_board_open')"><br />
+</div>
+<br clear="all">
+</form>
+</div>
+チャット入力欄 : <input type="text" id="chat_textbox" width="400" onkeydown="chat_textbox_key(event)">
+<input type="button" value="送信" onClick="send_chat()">
+<input type="button" value="チャット履歴クリア" onClick="clear_chat()"><br />
+<div id="chat_name" style="float: left; text-align: right;">
+</div>
+<div id="chat_text" style="float: left;">
+</div>
+<br clear="all">
+</body>
+</html>

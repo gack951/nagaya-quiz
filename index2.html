@@ -1,0 +1,268 @@
+<html>
+<head><title>node.js + socket.io クイズ</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<script src = "socket.io/socket.io.js"></script>
+<script>
+var soc = io.connect("http://sasamine.net:3000", {"sync disconnect on unload" : true});
+var table25 = "";
+var score_board = "";
+var sound = "";
+var my_color="";
+var answering = 0;
+var answer = "";
+var next_answers = "";
+var attack_chance = "";
+var chat_textbox = "";
+var chat_text = "", chat_name = "";
+var user_color = "";
+var white_board = "";
+soc.on("init", function(){
+	table25 = document.getElementById("table25");
+	score_board = {"#ff7070": document.getElementById("#ff7070"), "#7cdb69": document.getElementById("#7cdb69"), "#ffffff": document.getElementById("#ffffff"), "#898dff": document.getElementById("#898dff")};
+	sound = {"maru" : maru, "maru0" : maru0, "maru1" : maru1, "maru2" : maru2, "maru3" : maru3, "maru4" : maru4, "batsu" : batsu, "batsu25" : batsu25, "think" : think};
+	users_num = document.getElementById("users_num");
+	online_users = document.getElementById("online_users");
+	my_color = document.getElementsByName("my_color");
+	answer = document.getElementById("answer");
+	next_answers = document.getElementById("next_answers");
+	attack_chance = document.getElementById("attack_chance");
+	chat_textbox = document.getElementById("chat_textbox");
+	chat_name = document.getElementById("chat_name");
+	chat_text = document.getElementById("chat_text");
+	white_board = document.getElementById("white_board");
+});
+soc.on("ping", function(data){
+	if(user_color != ""){
+		soc.emit("on connect", {"user": document.getElementById("player_name").value, "color": user_color, "time": data});
+	}
+});
+soc.on("sound", function(data){	//メッセージ"sound"受信時の処理
+	play_sound(data);
+});
+soc.on("update", function(data){
+	for(i = 0; i < 5; i++){
+		for(j = 0; j < 5; j++){
+			table25.rows[i].cells[j].style.backgroundColor = data[0][i][j];
+		}
+	}
+	cnt = 0;
+	for(i in data[1]){
+		score_board[i].innerHTML = data[1][i];
+		if(++cnt == 4) break;
+	}
+});
+soc.on("users", function(data){
+	users_num.innerHTML = data.length;
+	online_users.innerHTML = "";
+	for(var i = 0; i < data.length; i++){
+		if(data[i]["color"] == "white"){
+			online_users.innerHTML = online_users.innerHTML+"<br /><font color='black' style='background-color: white'>"+data[i]["user"]+"</font>";
+		}else{
+			online_users.innerHTML = online_users.innerHTML+"<br /><font color='white' style='background-color: "+data[i]["color"]+"'>"+data[i]["user"]+"</font>";
+		}
+	}
+});
+soc.on("p", function(data){
+	if(!answering){
+		play_sound(data[0][0]["color"]);
+		answering = 1;
+	}
+	answer.style.backgroundColor=data[0][0]["color"];
+	if(data[0][0]["color"] == "white"){
+		answer.style.color="black";
+	}else{
+		answer.style.color="white";
+	}
+	answer.innerHTML = data[0][0]["player"];
+
+	next_answers.innerHTML = "";
+	for(var i = 1; i < data.length; i++){
+		if(data[i][0]["color"] == "white"){
+			next_answers.innerHTML = next_answers.innerHTML+" <font color='black' style='background-color: white'> "+data[i][0]["player"]+" </font>("+(data[i][1]-data[0][1])+"ms) ";
+		}else{
+			next_answers.innerHTML = next_answers.innerHTML+" <font color='white' style='background-color: "+data[i][0]["color"]+"'> "+data[i][0]["player"]+" </font>("+(data[i][1]-data[0][1])+"ms) ";
+		}
+	}
+});
+soc.on("answer_clear", function(){
+	answer.style.backgroundColor="white";
+	answer.innerHTML = "";
+	next_answers.innerHTML = "";
+	answering = 0;
+});
+soc.on("attack_chance", function(){
+	attack_chance.innerHTML = "アタックチャンス";
+});
+soc.on("not_attack_chance", function(){
+	attack_chance.innerHTML = "";
+});
+soc.on("chat", function(data){
+	if(data["color"] == "white"){
+		chat_name.innerHTML = "<font color='black' style='background-color: white'> "+data["user"]+" </font><br />" + chat_name.innerHTML;
+	}else{
+		chat_name.innerHTML = "<font color='white' style='background-color: "+data["color"]+"'> "+data["user"]+" </font><br />" + chat_name.innerHTML;
+	}
+	chat_text.innerHTML = " : " + data["text"] + "<br />" + chat_text.innerHTML;
+});
+soc.on("memo", function(data){
+	document.getElementById("memobox").value = data[0];
+});
+soc.on("white_board_open", function(data){
+	var tmp_name = "", tmp_text = "";
+	for(var i in data){
+		if(data[i]["color"] == "white"){
+			tmp_name += "<font color='black' style='background-color: white'>"+data[i]["user"]+" </font><br />";
+		}else{
+			tmp_name += "<font color='white' style='background-color: "+data[i]["color"]+"'>"+data[i]["user"]+" </font><br />";
+		}
+		tmp_text += "っ[ " + data[i]["text"] + " ] <br />";
+	}
+	chat_name.innerHTML = "-----<br />" + tmp_name + "-----<br />" + chat_name.innerHTML;
+	chat_text.innerHTML = "----------------------------<br />" + tmp_text + "----------------------------<br />" + chat_text.innerHTML;
+	white_board.value = "";
+	soc.emit("white_board", {"user": document.getElementById("player_name").value, "color": user_color, "text": ""});
+});
+soc.on("dice_val", function(data){
+	document.getElementById("dice").innerHTML="";
+	setTimeout(function(){
+		document.getElementById("dice").innerHTML=data;
+	},600);
+});
+function play_sound(sound_name){
+	for(var i in sound){
+		sound[i].pause();
+	}
+	if(sound_name.indexOf("maru") != -1 || sound_name == "batsu" || sound_name == "batsu25" || sound_name == "think"){
+		sound[sound_name].currentTime = 0;
+		sound[sound_name].play();
+	}
+	else (new Audio("http://sasamine.net/quiz/"+sound_name+".mp3")).play();
+}
+function p(e){
+	if(e==0 || e.keyCode==9 || e.keyCode==13 || e.keyCode==32 || e.keyCode==80){
+		if(user_color != ""){
+			soc.emit("p", {color : user_color, player : document.getElementById("player_name").value});
+		}else{
+			alert("自分の色を選択してください！");
+		}
+	}
+}
+function send_chat(){
+	if(user_color != ""){
+		soc.emit("chat", {"user": document.getElementById("player_name").value, "color": user_color, "text": chat_textbox.value});
+	}else{
+		soc.emit("chat", {"user": document.getElementById("player_name").value, "color": "white", "text": chat_textbox.value});
+	}
+	chat_textbox.value = "";
+}
+function clear_chat(){
+	chat_name.innerHTML = "";
+	chat_text.innerHTML = "";
+}
+function chat_textbox_key(e){
+	if(e.keyCode == 13){
+		send_chat();
+	}
+}
+function change_info(){
+	var i = 0;
+	while(i < my_color.length){
+		if(my_color[i].checked){
+			user_color = my_color[i].value;
+		}
+		i++;
+	}
+	soc.emit("change_info");
+}
+function change_white_board(){
+	soc.emit("white_board", {"user": document.getElementById("player_name").value, "color": user_color, "text": white_board.value});
+}
+
+</script>
+<style type="text/css">
+<!--
+table, td, th {
+	border: 2px #000000 solid;
+}
+//-->
+</style>
+</head>
+<body>
+<div>
+<audio src="http://sasamine.net:3000/sounds/maru.mp3" id="maru" preload="auto"></audio>
+<audio src="http://sasamine.net:3000/sounds/maru0.mp3" id="maru0" preload="auto"></audio>
+<audio src="http://sasamine.net:3000/sounds/maru1.mp3" id="maru1" preload="auto"></audio>
+<audio src="http://sasamine.net:3000/sounds/maru2.mp3" id="maru2" preload="auto"></audio>
+<audio src="http://sasamine.net:3000/sounds/maru3.mp3" id="maru3" preload="auto"></audio>
+<audio src="http://sasamine.net:3000/sounds/maru4.mp3" id="maru4" preload="auto"></audio>
+<audio src="http://sasamine.net:3000/sounds/batsu.mp3" id="batsu" preload="auto"></audio>
+<audio src="http://sasamine.net:3000/sounds/batsu25.mp3" id="batsu25" preload="auto"></audio>
+<audio src="http://sasamine.net:3000/sounds/think.mp3" id="think" preload="auto"></audio>
+<div style="float: left">
+<table border="1" style="min-width: 450px; height: 100px; font-size: 80px">
+<tr align="center">
+<td id="answer"></td>
+</tr>
+</table>
+</div>
+<div id="dice" align=center style="float: left; width: 80; height: 80; border: black solid 2px; font-size: 75px">
+</div>
+<br clear="all">
+次: <span id="next_answers"></span><br>
+<div style="float: left">
+<form name="attack25_board">
+<div id="attack_chance" style="font-size: 40px; background-color: yellow"></div>
+<div style="float: left">
+<table rules="none" id="table25" width="250" height="170" cellspacing="0" style="font-size: 20px">
+<tr align="center"><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td></tr>
+<tr align="center"><td>6</td><td>7</td><td>8</td><td>9</td><td>10</td></tr>
+<tr align="center"><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td></tr>
+<tr align="center"><td>16</td><td>17</td><td>18</td><td>19</td><td>20</td></tr>
+<tr align="center"><td>21</td><td>22</td><td>23</td><td>24</td><td>25</td></tr>
+</table>
+<table border="1" id="score" width="250" height="40" style="font-size: 40px">
+<tr align="center">
+<td id="#ff7070" width = "25%" style="color: white; background-color: red">0</td>
+<td id="#7cdb69" width = "25%" style="color: white; background-color: green">0</td>
+<td id="#ffffff" width = "25%">0</td>
+<td id="#898dff" width = "25%" style="color: white; background-color: blue">0</td>
+</tr>
+</table>
+</div>
+<div style="float: left">
+メモ欄(マスターが変更すると受信します)<br />
+<textarea id="memobox" rows="12" cols="40" readonly></textarea>
+</div>
+</div>
+<div style="float: left">
+接続 : <span id="users_num">0</span><br />
+<span id="online_users"></span>
+</div>
+<br clear="all">
+</form>
+<div style="float: left">
+名前:<input type="text" id="player_name" onchange="change_info()"><br />
+<input type="radio" name="my_color" value="red" onchange="change_info()"><span style="color: white; background-color:red"> 赤 </span>
+<input type="radio" name="my_color" value="green" onchange="change_info()"><span style="color: white; background-color:green"> 緑 </span>
+<input type="radio" name="my_color" value="white" onchange="change_info()"><span style="color: black; background-color:white"> 白 </span>
+<input type="radio" name="my_color" value="blue" onchange="change_info()"><span style="color: white; background-color:blue"> 青 </span><br />
+</div>
+<div style="float: left; border:#000000 solid 1px; padding: 5px">
+回答ボード(記入後、マスターの操作で公開されます。)<br />
+<input type="text" id="white_board" onkeyup="change_white_board()" style="width: 100%" />
+</div>
+<br clear="all">
+<input type="button" value="p" onkeydown="p(event)" onclick="p(0)" style="width: 100px; height: 40px; font-size: 30px">
+<input type="button" value="クリックしてフォーカス" onkeydown="p(event)" style="height: 40px; font-size: 30px"><br />
+pボタンはクリックでも、どちらのボタンもクリック後に何かキーを押すとpが送信されます。
+</div>
+チャット入力欄 : <input type="text" id="chat_textbox" width="400" onkeydown="chat_textbox_key(event)">
+<input type="button" value="送信" onClick="send_chat()">
+<input type="button" value="チャット履歴クリア" onClick="clear_chat()"><br />
+<div id="chat_name" style="float: left; text-align: right;">
+</div>
+<div id="chat_text" style="float: left;">
+</div>
+<br clear="all">
+</body>
+</html>
