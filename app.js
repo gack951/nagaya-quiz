@@ -34,6 +34,7 @@ var reqURLs = {
 				"/index.html": "index.html",
 				"/index2.html": "index2.html",
 				"/master": "master.html",
+				"/master.html": "master.html",
 				"/favicon.ico": "favicon.ico",
 				"/sounds/maru.mp3": "sounds/maru.mp3",
 				"/sounds/maru0.mp3": "sounds/maru0.mp3",
@@ -247,10 +248,7 @@ function users_emit(){
 }
 
 io.on('connection', function (soc) {	//クライアント接続時
-	console.log('new connection.');
-
 	soc.on('on connect', function (data){	//これ以降は第一引数に当てはまるイベント受信時に処理
-		console.log('keeping connection.');
 		if(data["time"]==pingTime){
 			users.push(data);
 		}
@@ -380,7 +378,7 @@ io.on('connection', function (soc) {	//クライアント接続時
 	soc.on("dice", function(data){
 		io.emit("dice_val",[mt.nextInt()%(data[1]-data[0]+1)+data[0]*1]);
 	});
-	
+
 	var glay_num = 0;
 	for(var i = 0; i < 5; i++){
 		for(var j = 0; j < 5; j++){
@@ -398,4 +396,4 @@ app.listen(port, ip_addr, function(){
 	console.log('Server Working!');
 });
 
-console.log("Server is running.");
+console.log("Initialize done.");
