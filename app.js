@@ -7,7 +7,7 @@ var ip_addr = process.env.OPENSHIFT_NODEJS_IP   || '127.0.0.1';
 var port    = process.env.OPENSHIFT_NODEJS_PORT || '8080';
 
 app.listen(port, ip_addr, function(){
-  console.log('Server Working!!');
+	console.log('Server Working!!');
 });
 
 var RED = "#ff7070",
@@ -238,7 +238,9 @@ function users_emit(){
 	},1000);
 }
 io.on('connection', function (soc) {	//クライアント接続時
+	console.log('new connection.');
 	soc.on('on connect', function (data){	//これ以降は第一引数に当てはまるイベント受信時に処理
+		console.log('keeping connection.');
 		if(data["time"]==pingTime){
 			users.push(data);
 		}
