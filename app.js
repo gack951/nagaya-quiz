@@ -3,7 +3,12 @@ var io = require('socket.io')(app);
 var fs = require('fs');
 var url = require('url');
 
-app.listen(3000);
+var ip_addr = process.env.OPENSHIFT_NODEJS_IP   || '127.0.0.1';
+var port    = process.env.OPENSHIFT_NODEJS_PORT || '8080';
+
+app.listen(port, ip_addr, function(){
+  console.log('Server Working!!');
+});
 
 var RED = "#ff7070",
 	GREEN = "#7cdb69",
