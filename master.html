@@ -3,7 +3,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <script src = "socket.io/socket.io.js"></script>
 <script>
-var soc = io.connect("http://sasamine.net:3000", {"sync disconnect on unload" : true});
+var soc = io.connect("http://http://quiz-nagaya-quiz.44fs.preview.openshiftapps.com", {"sync disconnect on unload" : true});
 var table25 = "";
 var score_board = "";
 var sound = "";
@@ -139,7 +139,7 @@ function play_sound(sound_name){
 		sound[sound_name].currentTime = 0;
 		sound[sound_name].play();
 	}
-	else (new Audio("http://sasamine.net:3000/sounds/"+sound_name+".mp3")).play();
+	else (new Audio("http://http://quiz-nagaya-quiz.44fs.preview.openshiftapps.com/sounds/"+sound_name+".mp3")).play();
 }
 function maru_sound_plus(){
 	num = Math.floor(Math.random() * 5);
@@ -209,8 +209,8 @@ table, td, th {
 <div>
 <div style="float: left">
 <div style="float: left">
-<input type="image" src="http://sasamine.net:3000/images/maru.png" width="80" height="80" onclick="sound_send('maru')">
-<input type="image" src="http://sasamine.net:3000/images/batsu.png" width="80" height="80" onclick="sound_send('batsu')">
+<input type="image" src="http://http://quiz-nagaya-quiz.44fs.preview.openshiftapps.com/images/maru.png" width="80" height="80" onclick="sound_send('maru')">
+<input type="image" src="http://http://quiz-nagaya-quiz.44fs.preview.openshiftapps.com/images/batsu.png" width="80" height="80" onclick="sound_send('batsu')">
 </div>
 <div style="float: left">
 <input type="button" onclick="answer_clear()" value="回答者クリア"><br />
@@ -238,15 +238,15 @@ table, td, th {
 <br clear="all">
 次: <span id="next_answers" style="width: 450px"></span><br>
 キーボードのM(マル),B(バツ),A(アタック25)で鳴らすときは<input type="button" value="ここ" onkeydown="sound_key(event.keyCode)">をクリックしてフォーカスを合わせておいてください。<br />
-<audio src="http://sasamine.net:3000/sounds/maru.mp3" id="maru" preload="auto"></audio>
-<audio src="http://sasamine.net:3000/sounds/maru0.mp3" id="maru0" preload="auto"></audio>
-<audio src="http://sasamine.net:3000/sounds/maru1.mp3" id="maru1" preload="auto"></audio>
-<audio src="http://sasamine.net:3000/sounds/maru2.mp3" id="maru2" preload="auto"></audio>
-<audio src="http://sasamine.net:3000/sounds/maru3.mp3" id="maru3" preload="auto"></audio>
-<audio src="http://sasamine.net:3000/sounds/maru4.mp3" id="maru4" preload="auto"></audio>
-<audio src="http://sasamine.net:3000/sounds/batsu.mp3" id="batsu" preload="auto"></audio>
-<audio src="http://sasamine.net:3000/sounds/batsu25.mp3" id="batsu25" preload="auto"></audio>
-<audio src="http://sasamine.net:3000/sounds/think.mp3" id="think" preload="auto"></audio>
+<audio src="http://http://quiz-nagaya-quiz.44fs.preview.openshiftapps.com/sounds/maru.mp3" id="maru" preload="auto"></audio>
+<audio src="http://http://quiz-nagaya-quiz.44fs.preview.openshiftapps.com/sounds/maru0.mp3" id="maru0" preload="auto"></audio>
+<audio src="http://http://quiz-nagaya-quiz.44fs.preview.openshiftapps.com/sounds/maru1.mp3" id="maru1" preload="auto"></audio>
+<audio src="http://http://quiz-nagaya-quiz.44fs.preview.openshiftapps.com/sounds/maru2.mp3" id="maru2" preload="auto"></audio>
+<audio src="http://http://quiz-nagaya-quiz.44fs.preview.openshiftapps.com/sounds/maru3.mp3" id="maru3" preload="auto"></audio>
+<audio src="http://http://quiz-nagaya-quiz.44fs.preview.openshiftapps.com/sounds/maru4.mp3" id="maru4" preload="auto"></audio>
+<audio src="http://http://quiz-nagaya-quiz.44fs.preview.openshiftapps.com/sounds/batsu.mp3" id="batsu" preload="auto"></audio>
+<audio src="http://http://quiz-nagaya-quiz.44fs.preview.openshiftapps.com/sounds/batsu25.mp3" id="batsu25" preload="auto"></audio>
+<audio src="http://http://quiz-nagaya-quiz.44fs.preview.openshiftapps.com/sounds/think.mp3" id="think" preload="auto"></audio>
 <form name="attack25_board">
 <div id="attack_chance" style="font-size: 30px; background-color: yellow"></div><br />
 <input type="button" onclick="colors_button_click('#ff7070')" value="赤" style="width:45px; height:30px; background-color:#ff7070;">
