@@ -3,12 +3,12 @@ var io = require('socket.io')(app);
 var fs = require('fs');
 var url = require('url');
 
-var ip_addr = process.env.OPENSHIFT_NODEJS_IP   || '127.0.0.1';
-var port    = process.env.OPENSHIFT_NODEJS_PORT || '8080';
-
-app.listen(port, ip_addr, function(){
-	console.log('Server Working!!');
+process.on('uncaughtException', function(err) {
+    console.log(err);
 });
+
+var ip_addr = process.env.IP   || process.env.OPENSHIFT_NODEJS_IP || '0.0.0.0';
+var port    = process.env.PORT || process.env.OPENSHIFT_NODEJS_PORT || 8080;
 
 var RED = "#ff7070",
 	GREEN = "#7cdb69",
@@ -64,14 +64,17 @@ function MersenneTwister(seed) {
 	this._mt = new Array(624);
 	this.setSeed(seed);
 }
+
 MersenneTwister._mulUint32 = function(a, b) {
 	var a1 = a >>> 16, a2 = a & 0xffff;
 	var b1 = b >>> 16, b2 = b & 0xffff;
 	return (((a1 * b2 + a2 * b1) << 16) + a2 * b2) >>> 0;
 };
+
 MersenneTwister._toNumber = function(x) {
 	return (typeof x == "number" && !isNaN(x)) ? Math.ceil(x) : 0;
 };
+
 MersenneTwister.prototype.setSeed = function(seed) {
 	var mt = this._mt;
 	if (typeof seed == "number") {
@@ -110,6 +113,7 @@ MersenneTwister.prototype.setSeed = function(seed) {
 		throw new TypeError("MersenneTwister: illegal seed.");
 	}
 };
+
 MersenneTwister.prototype._nextInt = function() {
 	var mt = this._mt, value;
 
@@ -135,6 +139,7 @@ MersenneTwister.prototype._nextInt = function() {
 	value ^=  value >>> 18;
 	return value >>> 0;
 };
+
 MersenneTwister.prototype.nextInt = function() {
 	var min, sup;
 	switch (arguments.length) {
@@ -161,6 +166,7 @@ MersenneTwister.prototype.nextInt = function() {
 	} while (sup > 4294967296 - (value - (value %= sup)));
 	return value + min;
 };
+
 MersenneTwister.prototype.next = function() {
 	var a = this._nextInt() >>> 5, b = this._nextInt() >>> 6;
 	return (a * 0x4000000 + b) / 0x20000000000000;
@@ -207,6 +213,7 @@ function othello(data,r,c,vel){
 		}
 	}
 }
+
 function change_colors(change_cells,data){
 	if(change_cells.length == 0) return;
 	index = change_cells.shift();
@@ -224,6 +231,7 @@ function change_colors(change_cells,data){
 		change_colors(change_cells,data);
 	},600);
 }
+
 function users_emit(){
 	users=[];
 	pingTime=+new Date();
@@ -237,17 +245,21 @@ function users_emit(){
 		io.emit("users", users);
 	},1000);
 }
+
 io.on('connection', function (soc) {	//クライアント接続時
 	console.log('new connection.');
+
 	soc.on('on connect', function (data){	//これ以降は第一引数に当てはまるイベント受信時に処理
 		console.log('keeping connection.');
 		if(data["time"]==pingTime){
 			users.push(data);
 		}
 	});
+
 	soc.on("sound", function(data){
 		io.emit("sound",data); //master含めて全ユーザーにメッセージsoundを送信
 	});
+
 	soc.on("change", function(data){
 		--points[board[data[0]][data[1]]];
 		board[data[0]][data[1]]=data[2];
@@ -276,6 +288,7 @@ io.on('connection', function (soc) {	//クライアント接続時
 			io.emit("not_attack_chance");
 		}
 	});
+
 	soc.on("p", function(data){
 		for(var i = 0; i < answer.length; i++){
 			if(answer[i][0]["player"] == data["player"]){
@@ -285,10 +298,12 @@ io.on('connection', function (soc) {	//クライアント接続時
 		answer.push([data,+new Date()]);
 		io.emit("p", answer);
 	});
+
 	soc.on("answer_clear", function(){
 		answer = [];
 		io.emit("answer_clear");
 	});
+
 	soc.on("reset_table", function(){
 		board =	[[GLAY,GLAY,GLAY,GLAY,GLAY],
 			 [GLAY,GLAY,GLAY,GLAY,GLAY],
@@ -299,26 +314,33 @@ io.on('connection', function (soc) {	//クライアント接続時
 		io.emit("update", [board, points]);
 		io.emit("not_attack_chance");
 	});
+
 	soc.on("disconnect", function(data){	//切断時
 		users_emit();
 	});
+
 	soc.on("change_info", function(){	//情報更新時
 		users_emit();
 	});
+
 	soc.emit("init");
 	users_emit();
 	soc.emit("update", [board, points]);	//ボードと点数情報を新規クライアントに送信
 	soc.emit("memo", memo);
+
 	if(answer.length > 0){
 		soc.emit("p", answer);
 	}
+
 	soc.on("chat", function(data){
 		io.emit("chat", data);
 	});
+
 	soc.on("memo", function(data){
 		memo=data;
 		io.emit("memo", data);
 	});
+
 	soc.on("white_board", function(data){
 		var isNewUser = true;
 		for(var i in white_board){
@@ -350,12 +372,15 @@ io.on('connection', function (soc) {	//クライアント接続時
 		white_board.sort();
 		io.emit("white_board", white_board);
 	});
+
 	soc.on("white_board_open", function(){
 		io.emit("white_board_open", white_board);
 	});
+
 	soc.on("dice", function(data){
 		io.emit("dice_val",[mt.nextInt()%(data[1]-data[0]+1)+data[0]*1]);
 	});
+	
 	var glay_num = 0;
 	for(var i = 0; i < 5; i++){
 		for(var j = 0; j < 5; j++){
@@ -367,6 +392,10 @@ io.on('connection', function (soc) {	//クライアント接続時
 	}else{
 		io.emit("not_attack_chance");
 	}
+});
+
+app.listen(port, ip_addr, function(){
+	console.log('Server Working!');
 });
 
 console.log("Server is running.");
