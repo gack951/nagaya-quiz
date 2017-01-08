@@ -209,7 +209,6 @@ table, td, th {
 </div>
 <br clear="all">
 次: <span id="next_answers"></span><br>
-<div style="float: left">
 <form name="attack25_board">
 <div id="attack_chance" style="font-size: 40px; background-color: yellow"></div>
 <div style="float: left">
@@ -233,15 +232,14 @@ table, td, th {
 メモ欄(マスターが変更すると受信します)<br />
 <textarea id="memobox" rows="12" cols="40" readonly></textarea>
 </div>
-</div>
 <div style="float: left">
 接続 : <span id="users_num">0</span><br />
 <span id="online_users"></span>
 </div>
-<br clear="all">
 </form>
+<br clear="all">
 <div style="float: left">
-名前:<input type="text" id="player_name" onchange="change_info()"><br />
+名前:<input type="text" id="player_name" maxlength='20' onchange="change_info()"><br />
 <input type="radio" name="my_color" value="red" onchange="change_info()"><span style="color: white; background-color:red"> 赤 </span>
 <input type="radio" name="my_color" value="green" onchange="change_info()"><span style="color: white; background-color:green"> 緑 </span>
 <input type="radio" name="my_color" value="white" onchange="change_info()" checked><span style="color: black; background-color:white"> 白 </span>
@@ -253,7 +251,7 @@ table, td, th {
 </div>
 <br clear="all">
 <input type="button" value="p" onkeydown="p(event)" onclick="p(0)" style="width: 100px; height: 40px; font-size: 30px">
-<input type="button" value="クリックしてフォーカス" onkeydown="p(event)" style="height: 40px; font-size: 30px"><br />
+<input type="button" value=" " onkeydown="p(event)" style="width: 100px; height: 40px; font-size: 30px"><br />
 pボタンはクリックでも、どちらのボタンもクリック後に何かキーを押すとpが送信されます。
 </div>
 チャット入力欄 : <input type="text" id="chat_textbox" width="400" onkeydown="chat_textbox_key(event)">
